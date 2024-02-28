@@ -72,7 +72,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         if iteration % 1000 == 0:
             gaussians.oneupSHdegree()
 
-        # Pick a random Camera
+        # Pick a random Camera until the list is empty then repopulate it
         if not viewpoint_stack:
             viewpoint_stack = scene.getTrainCameras().copy()
         viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
@@ -84,8 +84,11 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         bg = torch.rand((3), device="cuda") if opt.random_background else background
 
         render_pkg = render(viewpoint_cam, gaussians, pipe, bg)
+        # viewspace_point_tensor.shape
+        # torch.Size([66290, 3])
+        # len(radii) = 66290
         image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
-
+        # visibility filter to get true/false for the gaussians we can observe from the viewpoint cam
         # Loss
         gt_image = viewpoint_cam.original_image.cuda()
         Ll1 = l1_loss(image, gt_image)
@@ -109,18 +112,20 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
                 scene.save(iteration)
 
+            # store informations about the gradients
+            gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
             # Densification
             if iteration < opt.densify_until_iter:
                 # Keep track of max radii in image-space for pruning
                 gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
-                gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
+                #gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
 
                 if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
                     size_threshold = 20 if iteration > opt.opacity_reset_interval else None
                     gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold)
                 
                 if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
-                    gaussians.reset_opacity()
+                    gaussians.reset_opacity() # we prune also right before the first time we dansify if white background
 
             # Optimizer step
             if iteration < opt.iterations:
@@ -130,6 +135,9 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             if (iteration in checkpoint_iterations):
                 print("\n[ITER {}] Saving Checkpoint".format(iteration))
                 torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
+
+    # save final model information
+
 
 def prepare_output_and_logger(args):    
     if not args.model_path:
@@ -158,6 +166,33 @@ def training_report(tb_writer, iteration, Ll1, loss, l1_loss, elapsed, testing_i
         tb_writer.add_scalar('train_loss_patches/l1_loss', Ll1.item(), iteration)
         tb_writer.add_scalar('train_loss_patches/total_loss', loss.item(), iteration)
         tb_writer.add_scalar('iter_time', elapsed, iteration)
+        tb_writer.add_scalar('nb_gaussians', scene.gaussians.get_xyz.shape[0],iteration)
+
+        if(iteration%50==0):
+            grads_xyz=scene.gaussians.xyz_gradient_accum / scene.gaussians.denom
+            grads_xyz[grads_xyz.isnan()]=0.0
+
+            grads_featuresdc=scene.gaussians.features_dc_gradient_accum / scene.gaussians.denom
+            grads_featuresdc[grads_featuresdc.isnan()]=0.0
+
+            grads_featuresrest=scene.gaussians.features_rest_gradient_accum / scene.gaussians.denom
+            grads_featuresrest[grads_featuresrest.isnan()]=0.0
+
+            grads_scaling=scene.gaussians.scaling_gradient_accum / scene.gaussians.denom
+            grads_scaling[grads_scaling.isnan()]=0.0
+
+            grads_rotation=scene.gaussians.rotation_gradient_accum / scene.gaussians.denom
+            grads_rotation[grads_rotation.isnan()]=0.0
+
+            grads_opacity=scene.gaussians.opacity_gradient_accum / scene.gaussians.denom
+            grads_opacity[grads_opacity.isnan()]=0.0
+
+            tb_writer.add_scalar('xyz_gradmean', grads_xyz.mean(),iteration)
+            tb_writer.add_scalar('featuresdc_gradmean', grads_featuresdc.mean(),iteration)
+            tb_writer.add_scalar('featuresrest_gradmean', grads_featuresrest.mean(),iteration)
+            tb_writer.add_scalar('scaling_gradmean', grads_scaling.mean(),iteration)
+            tb_writer.add_scalar('rotation_gradmean', grads_rotation.mean(),iteration)
+            tb_writer.add_scalar('opacity_gradmean', grads_opacity.mean(),iteration)
 
     # Report test and samples of training set
     if iteration in testing_iterations:
@@ -169,6 +204,8 @@ def training_report(tb_writer, iteration, Ll1, loss, l1_loss, elapsed, testing_i
             if config['cameras'] and len(config['cameras']) > 0:
                 l1_test = 0.0
                 psnr_test = 0.0
+                ssim_test = 0.0
+
                 for idx, viewpoint in enumerate(config['cameras']):
                     image = torch.clamp(renderFunc(viewpoint, scene.gaussians, *renderArgs)["render"], 0.0, 1.0)
                     gt_image = torch.clamp(viewpoint.original_image.to("cuda"), 0.0, 1.0)
@@ -178,12 +215,16 @@ def training_report(tb_writer, iteration, Ll1, loss, l1_loss, elapsed, testing_i
                             tb_writer.add_images(config['name'] + "_view_{}/ground_truth".format(viewpoint.image_name), gt_image[None], global_step=iteration)
                     l1_test += l1_loss(image, gt_image).mean().double()
                     psnr_test += psnr(image, gt_image).mean().double()
+                    ssim_test += ssim(image, gt_image).mean().double()
                 psnr_test /= len(config['cameras'])
-                l1_test /= len(config['cameras'])          
+                l1_test /= len(config['cameras'])     
+                ssim_test /= len(config['cameras'])  
+
                 print("\n[ITER {}] Evaluating {}: L1 {} PSNR {}".format(iteration, config['name'], l1_test, psnr_test))
                 if tb_writer:
                     tb_writer.add_scalar(config['name'] + '/loss_viewpoint - l1_loss', l1_test, iteration)
                     tb_writer.add_scalar(config['name'] + '/loss_viewpoint - psnr', psnr_test, iteration)
+                    tb_writer.add_scalar(config['name'] + '/loss_viewpoint - ssim', ssim_test, iteration)
 
         if tb_writer:
             tb_writer.add_histogram("scene/opacity_histogram", scene.gaussians.get_opacity, iteration)
@@ -200,7 +241,7 @@ if __name__ == "__main__":
     parser.add_argument('--port', type=int, default=6009)
     parser.add_argument('--debug_from', type=int, default=-1)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
-    parser.add_argument("--test_iterations", nargs="+", type=int, default=[7_000, 30_000])
+    parser.add_argument("--test_iterations", nargs="+", type=int, default=[4_000, 7_000, 14_000, 21_000, 26_000, 30_000])
     parser.add_argument("--save_iterations", nargs="+", type=int, default=[7_000, 30_000])
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])

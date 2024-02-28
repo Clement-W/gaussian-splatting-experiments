@@ -96,22 +96,11 @@ class GaussianModel:
         self._opacity,
         self.max_radii2D, 
         xyz_gradient_accum, 
-        features_dc_gradient_accum, 
-        features_rest_gradient_accum,
-        scaling_gradient_accum,
-        rotation_gradient_accum,
-        opacity_gradient_accum,
         denom,
         opt_dict, 
         self.spatial_lr_scale) = model_args
         self.training_setup(training_args)
-        
         self.xyz_gradient_accum = xyz_gradient_accum
-        self.features_dc_gradient_accum = features_dc_gradient_accum
-        self.features_rest_gradient_accum = features_rest_gradient_accum
-        self.scaling_gradient_accum = scaling_gradient_accum
-        self.rotation_gradient_accum = rotation_gradient_accum
-        self.opacity_gradient_accum = opacity_gradient_accum
         self.denom = denom
         self.optimizer.load_state_dict(opt_dict)
 
@@ -172,13 +161,6 @@ class GaussianModel:
     def training_setup(self, training_args):
         self.percent_dense = training_args.percent_dense
         self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-        
-        self.features_dc_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-        self.features_rest_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-        self.scaling_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-        self.rotation_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-        self.opacity_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-        
         self.denom = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
 
         l = [
@@ -330,11 +312,6 @@ class GaussianModel:
         self._rotation = optimizable_tensors["rotation"]
 
         self.xyz_gradient_accum = self.xyz_gradient_accum[valid_points_mask]
-        self.features_dc_gradient_accum = self.features_dc_gradient_accum[valid_points_mask]
-        self.features_rest_gradient_accum = self.features_rest_gradient_accum[valid_points_mask] 
-        self.scaling_gradient_accum = self.scaling_gradient_accum[valid_points_mask] 
-        self.rotation_gradient_accum = self.rotation_gradient_accum[valid_points_mask]
-        self.opacity_gradient_accum = self.opacity_gradient_accum[valid_points_mask]
 
         self.denom = self.denom[valid_points_mask]
         self.max_radii2D = self.max_radii2D[valid_points_mask]
@@ -378,13 +355,6 @@ class GaussianModel:
         self._rotation = optimizable_tensors["rotation"]
 
         self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-
-        self.features_dc_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-        self.features_rest_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-        self.scaling_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-        self.rotation_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-        self.opacity_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-
         self.denom = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
 
@@ -446,11 +416,7 @@ class GaussianModel:
 
     def add_densification_stats(self, viewspace_point_tensor, update_filter):
         self.xyz_gradient_accum[update_filter] += torch.norm(viewspace_point_tensor.grad[update_filter,:2], dim=-1, keepdim=True)
-        
-        self.features_dc_gradient_accum[update_filter] += torch.norm(self._features_dc.grad[update_filter,:,:], dim=(-2,-1), keepdim=True).squeeze(-1)
-        self.features_rest_gradient_accum[update_filter] += torch.norm(self._features_rest.grad[update_filter,:,:], dim=(-2,-1), keepdim=True).squeeze(-1)
-        self.scaling_gradient_accum[update_filter] += torch.norm(self._scaling.grad[update_filter,:], dim=-1, keepdim=True) 
-        self.rotation_gradient_accum[update_filter] += torch.norm(self._rotation.grad[update_filter,:], dim=-1, keepdim=True)  
-        self.opacity_gradient_accum[update_filter] += torch.norm(self._opacity.grad[update_filter,:], dim=-1, keepdim=True)  
-        
         self.denom[update_filter] += 1
+
+    def update_gradients_stats(self,update_filter):
+        pass
