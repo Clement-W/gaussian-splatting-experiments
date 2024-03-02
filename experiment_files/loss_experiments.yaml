@@ -1,0 +1,6 @@
+params:
+	loss_type:
+		- l1
+		- ssim
+		- l2_ssim
+		- huber_ssim
