@@ -9,10 +9,11 @@ def parse_arguments():
     parser.add_argument("--skip_metrics", action="store_true")
     parser.add_argument("--output_path", default="../output")
     parser.add_argument("--expe_config", default=None)
-    parser.add_argument("--dataset_path", default="../dataset")
+    parser.add_argument("--dataset_path", default="../data_expe")
     return parser.parse_args()
 
 def run_command(command):
+    print("------------------------")
     print("Calling: " + command)
     os.system(command)
 
@@ -23,9 +24,7 @@ def run_experiment(expe_arg, flag, scenes, args):
         source = f"{args.dataset_path}/{scene}"
         output = f"{args.output_path}/{scene}/{flag}"
         
-        if os.path.exists(output) and not args.skip_training:
-            print(f"Skipping training for {scene} as output directory {output} already exists.")
-        elif not args.skip_training:
+        if not args.skip_training:
             train_cmd = f"python train.py -s {source} -m {output} {expe_arg} {common_args}"
             run_command(train_cmd)
         
