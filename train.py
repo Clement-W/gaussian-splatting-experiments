@@ -12,7 +12,8 @@
 import os
 import torch
 from random import randint
-from utils.loss_utils import l1_loss, ssim
+from utils.loss_utils import l1_loss, ssim, l2_loss
+import torch.nn.functional as F
 from gaussian_renderer import render, network_gui
 import sys
 from scene import Scene, GaussianModel
@@ -68,10 +69,13 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
         gaussians.update_learning_rate(iteration)
 
-        # Every 1000 its we increase the levels of SH up to a maximum degree
-        if iteration % 1000 == 0:
-            gaussians.oneupSHdegree()
 
+        if(gaussians.active_sh_degree < gaussians.max_sh_degree and lp.start_full_sh == True):
+            gaussians.active_sh_degree = gaussians.max_sh_degree
+        # Every 1000 its we increase the levels of SH up to a maximum degree
+        elif lp.start_full_sh == False and iteration % 1000 == 0:
+            gaussians.oneupSHdegree()
+        
         # Pick a random Camera until the list is empty then repopulate it
         if not viewpoint_stack:
             viewpoint_stack = scene.getTrainCameras().copy()
@@ -91,8 +95,24 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         # visibility filter to get true/false for the gaussians we can observe from the viewpoint cam
         # Loss
         gt_image = viewpoint_cam.original_image.cuda()
-        Ll1 = l1_loss(image, gt_image)
-        loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+        
+        if op.loss_type == "l1_ssim":
+            Ll1 = l1_loss(image, gt_image)
+            loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+        elif(op.loss_type == "l1"):
+            loss = l1_loss(image, gt_image)
+        elif(op.loss_type == "ssim"):
+            loss = 1.0 - ssim(image, gt_image)
+        elif(op.loss_type == "l2"):
+            loss = l2_loss(image, gt_image)
+        elif(op.loss_type == "l2_ssim"):
+            Ll2 = l2_loss(image, gt_image)
+            loss = (1.0 - opt.lambda_dssim) * Ll2 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+        elif(op.loss_type == "huber_ssim"):
+            loss = (1.0 - opt.lambda_dssim) * F.smooth_l1_loss(image, gt_image) + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+        else:
+            raise ValueError(f"Unknown loss type {op.loss_type}")
+
         loss.backward()
 
         iter_end.record()
@@ -137,7 +157,9 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
 
     # save final model information
-
+    gaussians_count = scene.gaussians.get_xyz.shape[0]
+    with open(scene.model_path + '/gaussiancount.txt', 'w') as f:
+        f.write(str(gaussians_count))
 
 def prepare_output_and_logger(args):    
     if not args.model_path:
