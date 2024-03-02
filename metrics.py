@@ -89,7 +89,7 @@ def evaluate(model_paths):
 
                 # if saved previously, get the number of gaussians
                 try:
-                    with open(scene_dir.model_path + '/gaussiancount.txt', 'r') as f:
+                    with open(scene_dir + '/gaussiancount.txt', 'r') as f:
                         gaussians_count = int(f.read().strip())
                         full_dict[scene_dir][method]['GaussiansCount'] = gaussians_count
                 except FileNotFoundError:
