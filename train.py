@@ -70,10 +70,10 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         gaussians.update_learning_rate(iteration)
 
 
-        if(gaussians.active_sh_degree < gaussians.max_sh_degree and lp.start_full_sh == True):
+        if(gaussians.active_sh_degree < gaussians.max_sh_degree and lp.start_full_sh == 1):
             gaussians.active_sh_degree = gaussians.max_sh_degree
         # Every 1000 its we increase the levels of SH up to a maximum degree
-        elif lp.start_full_sh == False and iteration % 1000 == 0:
+        elif lp.start_full_sh == 0 and iteration % 1000 == 0:
             gaussians.oneupSHdegree()
         
         # Pick a random Camera until the list is empty then repopulate it
