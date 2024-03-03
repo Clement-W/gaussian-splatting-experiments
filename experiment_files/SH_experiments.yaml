@@ -1,6 +1,6 @@
 params:
-	sh_degree:
-		- 1
-		- 2
-	start_full_sh:
-		- True
+  sh_degree:
+    - 1
+    - 2
+  start_full_sh:
+    - True
