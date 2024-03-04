@@ -49,7 +49,7 @@ def run_experiments_from_config(config_path, scenes, args):
 def main():
     args = parse_arguments()
     #scenes = ["truck", "train", "playroom"]
-    scenes = ["truck"]
+    scenes = ["playroom"]
 
     if args.expe_config is None:
         print("Running baseline experiment")

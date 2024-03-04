@@ -3,4 +3,4 @@ params:
     - 1
     - 2
   start_full_sh:
-    - True
+    - 1
