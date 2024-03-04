@@ -1,8 +1,0 @@
-params:
-  start_full_sh:
-    - 1
-  loss_type:
-    - l1
-    - ssim
-    - l2_ssim
-    - huber_ssim

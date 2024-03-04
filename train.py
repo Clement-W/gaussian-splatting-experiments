@@ -100,16 +100,22 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             Ll1 = l1_loss(image, gt_image)
             loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
         elif(opt.loss_type == "l1"):
-            loss = l1_loss(image, gt_image)
+            Ll1 = l1_loss(image, gt_image)
+            loss = Ll1
         elif(opt.loss_type == "ssim"):
             loss = 1.0 - ssim(image, gt_image)
+            Ll1 = loss # only used for logging, to avoid modifying the tensorboard logging function
         elif(opt.loss_type == "l2"):
             loss = l2_loss(image, gt_image)
+            Ll1 = loss # only used for logging
         elif(opt.loss_type == "l2_ssim"):
             Ll2 = l2_loss(image, gt_image)
+            Ll1 = Ll2 # only used for logging
             loss = (1.0 - opt.lambda_dssim) * Ll2 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
         elif(opt.loss_type == "huber_ssim"):
-            loss = (1.0 - opt.lambda_dssim) * F.smooth_l1_loss(image, gt_image) + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+            huber = F.smooth_l1_loss(image, gt_image)
+            Ll1 = huber # only used for logging
+            loss = (1.0 - opt.lambda_dssim) * huber + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
         else:
             raise ValueError(f"Unknown loss type {opt.loss_type}")
 
