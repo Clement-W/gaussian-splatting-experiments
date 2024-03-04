@@ -70,7 +70,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         gaussians.update_learning_rate(iteration)
 
 
-        if(gaussians.active_sh_degree < gaussians.max_sh_degree and lp.start_full_sh == 1):
+        if(gaussians.active_sh_degree < gaussians.max_sh_degree and dataset.start_full_sh == 1):
             gaussians.active_sh_degree = gaussians.max_sh_degree
         # Every 1000 its we increase the levels of SH up to a maximum degree
         elif lp.start_full_sh == 0 and iteration % 1000 == 0:
@@ -96,22 +96,22 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         # Loss
         gt_image = viewpoint_cam.original_image.cuda()
         
-        if op.loss_type == "l1_ssim":
+        if opt.loss_type == "l1_ssim":
             Ll1 = l1_loss(image, gt_image)
             loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
-        elif(op.loss_type == "l1"):
+        elif(opt.loss_type == "l1"):
             loss = l1_loss(image, gt_image)
-        elif(op.loss_type == "ssim"):
+        elif(opt.loss_type == "ssim"):
             loss = 1.0 - ssim(image, gt_image)
-        elif(op.loss_type == "l2"):
+        elif(opt.loss_type == "l2"):
             loss = l2_loss(image, gt_image)
-        elif(op.loss_type == "l2_ssim"):
+        elif(opt.loss_type == "l2_ssim"):
             Ll2 = l2_loss(image, gt_image)
             loss = (1.0 - opt.lambda_dssim) * Ll2 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
-        elif(op.loss_type == "huber_ssim"):
+        elif(opt.loss_type == "huber_ssim"):
             loss = (1.0 - opt.lambda_dssim) * F.smooth_l1_loss(image, gt_image) + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
         else:
-            raise ValueError(f"Unknown loss type {op.loss_type}")
+            raise ValueError(f"Unknown loss type {opt.loss_type}")
 
         loss.backward()
 
