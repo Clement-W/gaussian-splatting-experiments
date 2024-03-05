@@ -1,0 +1,9 @@
+params:
+  densification_interval:
+    - 50
+    - 200
+    - 500
+  opacity_reset_interval:
+    - 2000
+    - 10000
+    - 30001

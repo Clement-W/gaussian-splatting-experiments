@@ -1,0 +1,10 @@
+params:
+  densify_until_iter:
+    - 10000
+    - 20000
+    - 25000
+    - 30001
+  densify_grad_threshold:
+    - 0.0001
+    - 0.0003
+    - 0.0005
