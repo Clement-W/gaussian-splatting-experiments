@@ -116,6 +116,18 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             huber = F.smooth_l1_loss(image, gt_image)
             Ll1 = huber # only used for logging
             loss = (1.0 - opt.lambda_dssim) * huber + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+        elif(opt.loss_type == "variance_regularization"):
+            Ll1 = l1_loss(image, gt_image)
+            loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+            # add regularization on the covariance of the gaussian to prevent them from being overly large
+            max_scaling = torch.max(gaussians.get_scaling, dim=1).values #essayer gaussians.get_scaling[visibility_filter]
+            loss += 0.1 * torch.norm(max_scaling, p=2)
+        elif(opt.loss_type == "opacity_regularization"):
+            Ll1 = l1_loss(image, gt_image)
+            loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+            # add regularization on the opacity to force it to be close to 0 or 1 (so pruned or important)
+            opacities = gaussians.get_opacity
+            loss += 0.1* (-opacities * torch.log(opacities+1e-9) - (1 - opacities) * torch.log(1 - opacities+1e-9)).mean()
         else:
             raise ValueError(f"Unknown loss type {opt.loss_type}")
 
