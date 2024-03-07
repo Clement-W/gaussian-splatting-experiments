@@ -120,11 +120,11 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             raise ValueError(f"Unknown loss type {opt.loss_type}")
         
 
-        if(opt.regularization_type is not None and iteration > opt.regularize_from_iter and iteration < opt.regularize_until_iter):
+        if(opt.regularization_type != "" and iteration > opt.regularize_from_iter and iteration < opt.regularize_until_iter):
                         
-            if(opt.regularization_type == "variance_regularization"):
-                norm_scaling = torch.norm(gaussians.get_scaling, dim=1) #essayer gaussians.get_scaling[visibility_filter]
-                loss += opt.lambda_regularization * torch.mean(norm_scaling)
+            # if(opt.regularization_type == "variance_regularization"):
+            #     norm_scaling = torch.norm(gaussians.get_scaling, dim=1) #essayer gaussians.get_scaling[visibility_filter]
+            #     loss += opt.lambda_regularization * torch.mean(norm_scaling)
             if(opt.regularization_type == "maxvariance_regularization"):
                 max_scaling = torch.max(gaussians.get_scaling, dim=1).values #essayer gaussians.get_scaling[visibility_filter]
                 loss += opt.lambda_regularization * torch.mean(max_scaling)
@@ -136,7 +136,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 sobel_render = compute_sobel(image)
                 loss += opt.lambda_regularization * l1_loss(sobel_render, sobel_gt)
             elif(opt.regularization_type == "smoothness_regularization"):
-                smoothness = torch.norm(compute_laplacian(image), p=1)
+                smoothness = torch.norm(compute_laplacian(image), p=2)
                 loss += opt.lambda_regularization * smoothness
             else:
                 raise ValueError(f"Unknown regularization type {opt.regularization_type}")
@@ -294,7 +294,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug_from', type=int, default=-1)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
     parser.add_argument("--test_iterations", nargs="+", type=int, default=[4_000, 7_000, 14_000, 21_000, 26_000, 30_000])
-    parser.add_argument("--save_iterations", nargs="+", type=int, default=[7_000, 30_000])
+    parser.add_argument("--save_iterations", nargs="+", type=int, default=[30_000])
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
     parser.add_argument("--start_checkpoint", type=str, default = None)

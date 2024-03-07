@@ -38,7 +38,7 @@ class Camera(nn.Module):
             self.data_device = torch.device("cuda")
 
         self.original_image = image.clamp(0.0, 1.0).to(self.data_device)
-        self.edged_original_image = compute_sobel(self.original_image)
+        self.image_edges = compute_sobel(self.original_image)
         self.image_width = self.original_image.shape[2]
         self.image_height = self.original_image.shape[1]
 

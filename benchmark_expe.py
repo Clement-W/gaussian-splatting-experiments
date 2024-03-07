@@ -49,7 +49,7 @@ def run_experiments_from_config(config_path, scenes, args):
 
 def run_custom_gridsearch(scenes, args):
 
-    intervals = [[500, 30000], [500, 15000], [7000, 15000], [15000, 28000]]
+    intervals = [[500, 30000], [500, 5000],[500, 15000], [7000, 15000], [15000, 28000]]
     methods = ["variance_regularization","maxvariance_regularization","opacity_regularization","edge_regularization","smoothness_regularization"]
     lambdas = [0.0001,0.001,0.01,0.1]
     for method in methods:
