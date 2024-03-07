@@ -20,7 +20,7 @@ from scene import Scene, GaussianModel
 from utils.general_utils import safe_state
 import uuid
 from tqdm import tqdm
-from utils.image_utils import psnr
+from utils.image_utils import compute_sobel, psnr, compute_laplacian
 from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams
 try:
@@ -116,20 +116,32 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             huber = F.smooth_l1_loss(image, gt_image)
             Ll1 = huber # only used for logging
             loss = (1.0 - opt.lambda_dssim) * huber + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
-        elif(opt.loss_type == "variance_regularization"):
-            Ll1 = l1_loss(image, gt_image)
-            loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
-            # add regularization on the covariance of the gaussian to prevent them from being overly large
-            max_scaling = torch.max(gaussians.get_scaling, dim=1).values #essayer gaussians.get_scaling[visibility_filter]
-            loss += 0.1 * torch.norm(max_scaling, p=2)
-        elif(opt.loss_type == "opacity_regularization"):
-            Ll1 = l1_loss(image, gt_image)
-            loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
-            # add regularization on the opacity to force it to be close to 0 or 1 (so pruned or important)
-            opacities = gaussians.get_opacity
-            loss += 0.1* (-opacities * torch.log(opacities+1e-9) - (1 - opacities) * torch.log(1 - opacities+1e-9)).mean()
         else:
             raise ValueError(f"Unknown loss type {opt.loss_type}")
+        
+
+        if(opt.regularization_type is not None and iteration > opt.regularize_from_iter and iteration < opt.regularize_until_iter):
+                        
+            if(opt.regularization_type == "variance_regularization"):
+                norm_scaling = torch.norm(gaussians.get_scaling, dim=1) #essayer gaussians.get_scaling[visibility_filter]
+                loss += opt.lambda_regularization * torch.mean(norm_scaling)
+            if(opt.regularization_type == "maxvariance_regularization"):
+                max_scaling = torch.max(gaussians.get_scaling, dim=1).values #essayer gaussians.get_scaling[visibility_filter]
+                loss += opt.lambda_regularization * torch.mean(max_scaling)
+            elif(opt.regularization_type == "opacity_regularization"):
+                opacities = gaussians.get_opacity
+                loss += opt.lambda_regularization * (-opacities * torch.log(opacities+1e-9) - (1 - opacities) * torch.log(1 - opacities+1e-9)).mean()
+            elif(opt.regularization_type == "edge_regularization"):
+                sobel_gt = viewpoint_cam.image_edges.cuda()
+                sobel_render = compute_sobel(image)
+                loss += opt.lambda_regularization * l1_loss(sobel_render, sobel_gt)
+            elif(opt.regularization_type == "smoothness_regularization"):
+                smoothness = torch.norm(compute_laplacian(image), p=1)
+                loss += opt.lambda_regularization * smoothness
+            else:
+                raise ValueError(f"Unknown regularization type {opt.regularization_type}")
+
+
 
         loss.backward()
 

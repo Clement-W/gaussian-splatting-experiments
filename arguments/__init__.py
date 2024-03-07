@@ -89,6 +89,9 @@ class OptimizationParams(ParamGroup):
         self.densify_grad_threshold = 0.0002
         self.random_background = False
         self.loss_type = "l1_ssim"
+        self.regularize_from_iter = 500
+        self.regularize_until_iter = 30_000
+        self.lambda_regularization = 0.001
         super().__init__(parser, "Optimization Parameters")
 
 def get_combined_args(parser : ArgumentParser):

@@ -1,4 +1,0 @@
-params:
-  loss_type:
-    - variance_regularization
-    - opacity_regularization
