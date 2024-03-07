@@ -49,20 +49,30 @@ def run_experiments_from_config(config_path, scenes, args):
 
 def run_custom_gridsearch(scenes, args):
 
-    intervals = [[500, 30000], [500, 5000],[500, 15000], [7000, 15000], [15000, 28000]]
-    methods = ["variance_regularization","maxvariance_regularization","opacity_regularization","edge_regularization","smoothness_regularization"]
-    lambdas = [0.0001,0.001,0.01,0.1]
-    for method in methods:
-        for interval in intervals:
-            for l in lambdas:
-                expe_arg = f"--regularization_type {method} --lambda_regularization {l} --regularize_from_iter {interval[0]} --regularize_until_iter {interval[1]}"
-                flag = f"{method}_{l}_[{interval[0]},{interval[1]}]"
-                run_experiment(expe_arg, flag, scenes, args)
+    methods = { # tout, juste le début pour contraindre, toute la partie densification, milieu/fin densification, postdensification
+        "maxvariance_regularization": [[500, 30000], [500, 7000], [500, 15000], [7000, 15000], [15000, 28000]],
+        "opacity_regularization": [[7000, 15000], [15000, 28000], [2500, 30000]],
+        "edge_regularization": [[500, 30000], [500, 7000], [500, 15000], [7000, 15000], [15000, 28000]],
+        "smoothness_regularization": [[500, 30000], [500, 7000], [500, 15000], [7000, 15000], [15000, 28000]]
+    }
+    lambdas = {
+        "maxvariance_regularization":0.00001,
+        "opacity_regularization":0.000001,
+        "edge_regularization":0.001,
+        "smoothness_regularization":0.00001
+    }
 
+    for method, intervals in methods.items():
+        l = lambdas[method]
+        for interval in intervals:
+            expe_arg = f"--regularization_type {method} --lambda_regularization {l} --regularize_from_iter {interval[0]} --regularize_until_iter {interval[1]}"
+            flag = f"{method}_{l}_[{interval[0]},{interval[1]}]"
+            run_experiment(expe_arg, flag, scenes, args)
+    
 def main():
     args = parse_arguments()
     #scenes = ["truck", "train", "playroom"]
-    scenes = ["train"]
+    scenes = ["truck"]
 
     if args.expe_config is None and args.grid_search_regularization is None:
         print("Running baseline experiment")
