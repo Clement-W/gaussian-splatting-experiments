@@ -120,28 +120,46 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             raise ValueError(f"Unknown loss type {opt.loss_type}")
         
 
-        if(opt.regularization_type != "" and iteration > opt.regularize_from_iter and iteration < opt.regularize_until_iter):
+        # if(opt.regularization_type != "" and iteration > opt.regularize_from_iter and iteration < opt.regularize_until_iter):
                         
-            # if(opt.regularization_type == "variance_regularization"):
-            #     norm_scaling = torch.norm(gaussians.get_scaling, dim=1) #essayer gaussians.get_scaling[visibility_filter]
-            #     loss += opt.lambda_regularization * torch.mean(norm_scaling)
-            if(opt.regularization_type == "maxvariance_regularization"):
-                max_scaling = torch.max(gaussians.get_scaling, dim=1).values #essayer gaussians.get_scaling[visibility_filter]
-                loss += opt.lambda_regularization * torch.mean(max_scaling)
-            elif(opt.regularization_type == "opacity_regularization"):
-                opacities = gaussians.get_opacity
-                loss += opt.lambda_regularization * (-opacities * torch.log(opacities+1e-9) - (1 - opacities) * torch.log(1 - opacities+1e-9)).mean()
-            elif(opt.regularization_type == "edge_regularization"):
-                sobel_gt = viewpoint_cam.image_edges.cuda()
-                sobel_render = compute_sobel(image)
-                loss += opt.lambda_regularization * l1_loss(sobel_render, sobel_gt)
-            elif(opt.regularization_type == "smoothness_regularization"):
-                smoothness = torch.norm(compute_laplacian(image), p=2)
-                loss += opt.lambda_regularization * smoothness
-            else:
-                raise ValueError(f"Unknown regularization type {opt.regularization_type}")
+        #     # if(opt.regularization_type == "variance_regularization"):
+        #     #     norm_scaling = torch.norm(gaussians.get_scaling, dim=1) #essayer gaussians.get_scaling[visibility_filter]
+        #     #     loss += opt.lambda_regularization * torch.mean(norm_scaling)
+        #     if(opt.regularization_type == "maxvariance_regularization"):
+        #         max_scaling = torch.max(gaussians.get_scaling, dim=1).values #essayer gaussians.get_scaling[visibility_filter]
+        #         loss += opt.lambda_regularization * torch.mean(max_scaling)
+        #     elif(opt.regularization_type == "opacity_regularization"):
+        #         opacities = gaussians.get_opacity
+        #         loss += opt.lambda_regularization * (-opacities * torch.log(opacities+1e-9) - (1 - opacities) * torch.log(1 - opacities+1e-9)).mean()
+        #     elif(opt.regularization_type == "edge_regularization"):
+        #         sobel_gt = viewpoint_cam.image_edges.cuda()
+        #         sobel_render = compute_sobel(image)
+        #         loss += opt.lambda_regularization * l1_loss(sobel_render, sobel_gt)
+        #     elif(opt.regularization_type == "smoothness_regularization"):
+        #         smoothness = torch.norm(compute_laplacian(image), p=2)
+        #         loss += opt.lambda_regularization * smoothness
+        #     else:
+        #         raise ValueError(f"Unknown regularization type {opt.regularization_type}")
 
 
+ 
+        # allows to add multiple regularizations at different times
+        if(opt.maxvariance_regularization != 0 and iteration > 15_000 and iteration < 28_000):
+            max_scaling = torch.max(gaussians.get_scaling, dim=1).values
+            loss += opt.maxvariance_regularization * torch.mean(max_scaling)
+
+        if(opt.opacity_regularization != 0 and iteration > 15_000 and iteration < 28_000):
+            opacities = gaussians.get_opacity
+            loss += opt.opacity_regularization * (-opacities * torch.log(opacities+1e-9) - (1 - opacities) * torch.log(1 - opacities+1e-9)).mean()
+
+        if(opt.edge_regularization != 0 and iteration > 500 and iteration < 15_000):
+            sobel_gt = viewpoint_cam.image_edges.cuda()
+            sobel_render = compute_sobel(image)
+            loss += opt.edge_regularization * l1_loss(sobel_render, sobel_gt)
+
+        if(opt.smoothness_regularization != 0 and iteration > 500 and iteration < 28_000):
+            smoothness = torch.norm(compute_laplacian(image), p=2)
+            loss += opt.smoothness_regularization * smoothness
 
         loss.backward()
 

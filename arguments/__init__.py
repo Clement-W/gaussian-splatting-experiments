@@ -89,10 +89,16 @@ class OptimizationParams(ParamGroup):
         self.densify_grad_threshold = 0.0002
         self.random_background = False
         self.loss_type = "l1_ssim"
+        # used individual experiments about regularization
         self.regularization_type = ""
         self.regularize_from_iter = 500
         self.regularize_until_iter = 30_000
         self.lambda_regularization = 0.001
+        # user for combined experiments with predefined intervals
+        self.maxvariance_regularization = 0. # 1e-5
+        self.opacity_regularization = 0. # 1e-6 
+        self.edge_regularization = 0. # 1e-3
+        self.smoothness_regularization = 0. # 1e-5
         super().__init__(parser, "Optimization Parameters")
 
 def get_combined_args(parser : ArgumentParser):

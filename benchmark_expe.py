@@ -68,6 +68,27 @@ def run_custom_gridsearch(scenes, args):
             expe_arg = f"--regularization_type {method} --lambda_regularization {l} --regularize_from_iter {interval[0]} --regularize_until_iter {interval[1]}"
             flag = f"{method}_{l}_[{interval[0]},{interval[1]}]"
             run_experiment(expe_arg, flag, scenes, args)
+
+def run_custom_gridsearch2(scenes, args):
+
+    methods = ["maxvariance_regularization", "opacity_regularization", "edge_regularization", "smoothness_regularization"]
+    combinations = [[0,1], [0,2], [0,3], [1,2], [1,3], [2,3], [0,1,2,3], [0,1,2], [0,1,3], [0,2,3], [1,2,3]] # indices of methods to combine
+
+    lambdas = {
+        "maxvariance_regularization":0.00001,
+        "opacity_regularization":0.000001,
+        "edge_regularization":0.001,
+        "smoothness_regularization":0.00001
+    }
+
+    for combination in combinations:
+        methods_to_combine = [methods[i] for i in combination]
+        expe_args=""
+        for method in methods_to_combine:
+            expe_args += f"--{method} {lambdas[method]} "
+
+        flag = "_".join(methods_to_combine)
+        run_experiment(expe_args, flag, scenes, args)
     
 def main():
     args = parse_arguments()
@@ -79,7 +100,7 @@ def main():
         run_experiment("", "baseline", scenes, args)
     elif args.grid_search_regularization is not None:
         print("Running grid search for regularization")
-        run_custom_gridsearch(scenes,args)
+        run_custom_gridsearch2(scenes,args)
     else:
         print(f"Running experiments from config {args.expe_config}")
         run_experiments_from_config(args.expe_config, scenes, args)
