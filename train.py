@@ -144,11 +144,11 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
  
         # allows to add multiple regularizations at different times
-        if(opt.maxvariance_regularization != 0 and iteration > 15_000 and iteration < 28_000):
+        if(opt.maxvariance_regularization != 0 and iteration > 15_000 and iteration < 30_000):
             max_scaling = torch.max(gaussians.get_scaling, dim=1).values
             loss += opt.maxvariance_regularization * torch.mean(max_scaling)
 
-        if(opt.opacity_regularization != 0 and iteration > 15_000 and iteration < 28_000):
+        if(opt.opacity_regularization != 0 and iteration > 15_000 and iteration < 30_000):
             opacities = gaussians.get_opacity
             loss += opt.opacity_regularization * (-opacities * torch.log(opacities+1e-9) - (1 - opacities) * torch.log(1 - opacities+1e-9)).mean()
 
@@ -157,7 +157,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             sobel_render = compute_sobel(image)
             loss += opt.edge_regularization * l1_loss(sobel_render, sobel_gt)
 
-        if(opt.smoothness_regularization != 0 and iteration > 500 and iteration < 28_000):
+        if(opt.smoothness_regularization != 0 and iteration > 500 and iteration < 30_000):
             smoothness = torch.norm(compute_laplacian(image), p=2)
             loss += opt.smoothness_regularization * smoothness
 
