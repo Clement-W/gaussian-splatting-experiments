@@ -73,13 +73,13 @@ def run_custom_gridsearch2(scenes, args):
 
     methods = ["maxvariance_regularization", "opacity_regularization", "edge_regularization", "smoothness_regularization"]
     #combinations = [[0,1], [0,2], [0,3], [1,2], [1,3], [2,3], [0,1,2,3], [0,1,2], [0,1,3], [0,2,3], [1,2,3]] # indices of methods to combine
-    
-    combinations = [[1,3], [1,2], [0,1,2], [0,2,3], [2], [0], [3]] 
+    #combinations = [[1,3], [1,2], [0,1,2], [0,2,3], [2], [0], [3]] 
+    combinations = [[1,2], [0,2,3], [2], [3]] 
     lambdas = {
-        "maxvariance_regularization":0.00001,
-        "opacity_regularization":0.000001,
-        "edge_regularization":0.001,
-        "smoothness_regularization":0.00001
+        "maxvariance_regularization":0.0001,
+        "opacity_regularization":0.00001,
+        "edge_regularization":0.005,
+        "smoothness_regularization":0.0001
     }
 
     for combination in combinations:
