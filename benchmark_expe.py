@@ -76,10 +76,10 @@ def run_custom_gridsearch2(scenes, args):
     #combinations = [[1,3], [1,2], [0,1,2], [0,2,3], [2], [0], [3]] 
     combinations = [[1,2], [0,2,3], [2], [3]] 
     lambdas = {
-        "maxvariance_regularization":0.0001,
-        "opacity_regularization":0.00001,
-        "edge_regularization":0.005,
-        "smoothness_regularization":0.0001
+        "maxvariance_regularization":0.001,
+        "opacity_regularization":0.0000001,
+        "edge_regularization":0.01,
+        "smoothness_regularization":0.001
     }
 
     for combination in combinations:
@@ -94,7 +94,7 @@ def run_custom_gridsearch2(scenes, args):
 def main():
     args = parse_arguments()
     #scenes = ["truck", "train", "playroom","raindeer"]
-    scenes = ["raindeer"]
+    scenes = ["truck"]
 
     if args.expe_config is None and args.grid_search_regularization is None:
         print("Running baseline experiment")
