@@ -57,10 +57,10 @@ def run_custom_gridsearch(scenes, args):
         "smoothness_regularization": [[500, 30000], [500, 7000], [500, 15000], [7000, 15000], [15000, 28000]]
     }
     lambdas = {
-        "maxvariance_regularization":0.00001,
-        "opacity_regularization":0.000001,
-        "edge_regularization":0.001,
-        "smoothness_regularization":0.00001
+        "maxvariance_regularization":0.0001,
+        "opacity_regularization":0.00001,
+        "edge_regularization":0.005,
+        "smoothness_regularization":0.0001
     }
 
     for method, intervals in methods.items():
@@ -75,7 +75,7 @@ def run_custom_gridsearch2(scenes, args):
     methods = ["maxvariance_regularization", "opacity_regularization", "edge_regularization", "smoothness_regularization"]
     #combinations = [[0,1], [0,2], [0,3], [1,2], [1,3], [2,3], [0,1,2,3], [0,1,2], [0,1,3], [0,2,3], [1,2,3]] # indices of methods to combine
     #combinations = [[1,3], [1,2], [0,1,2], [0,2,3], [2], [0], [3]] 
-    combinations = [[1,2], [0,2,3], [2], [3]] 
+    combinations = [[0,2,3]] 
     lambdas = {
         "maxvariance_regularization":0.001,
         "opacity_regularization":0.0000001,
@@ -94,8 +94,8 @@ def run_custom_gridsearch2(scenes, args):
     
 def main():
     args = parse_arguments()
-    #scenes = ["truck", "train", "playroom","raindeer"]
-    scenes = ["raindeer"]
+    scenes = ["truck", "train", "raindeer"]
+    #scenes = ["raindeer"]
 
     if args.expe_config is None and args.grid_search_regularization is None:
         print("Running baseline experiment")
