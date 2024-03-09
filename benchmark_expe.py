@@ -94,7 +94,7 @@ def run_custom_gridsearch2(scenes, args):
 def main():
     args = parse_arguments()
     #scenes = ["truck", "train", "playroom","raindeer"]
-    scenes = ["truck"]
+    scenes = ["raindeer"]
 
     if args.expe_config is None and args.grid_search_regularization is None:
         print("Running baseline experiment")
