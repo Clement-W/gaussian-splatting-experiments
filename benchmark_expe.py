@@ -26,6 +26,7 @@ def run_experiment(expe_arg, flag, scenes, args):
         output = f"{args.output_path}/{scene}/{flag}"
         
         if not args.skip_training:
+            common_args += " -w" if scene == "raindeer" else ""
             train_cmd = f"python train.py -s {source} -m {output} {expe_arg} {common_args}"
             run_command(train_cmd)
         
