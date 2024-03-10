@@ -96,8 +96,8 @@ def custom_experiments(scenes, args):
 
     for i in range(3):
         # repete experience a few times
-        #reg_args = f"--maxvariance_regularization 0.0001 --edge_regularization 0.005 --smoothness_regularization 0.0001"
-        reg_args = f"--maxvariance_regularization 0.00001 --edge_regularization 0.001 --smoothness_regularization 0.00001"
+        reg_args = f"--maxvariance_regularization 0.0001 --edge_regularization 0.005 --smoothness_regularization 0.0001"
+        #reg_args = f"--maxvariance_regularization 0.00001 --edge_regularization 0.001 --smoothness_regularization 0.00001"
         flag = f"maxvariance_edge_smoothness_{i}"
         run_experiment(reg_args, flag, scenes, args)
 
@@ -109,7 +109,7 @@ def custom_experiments(scenes, args):
 def main():
     args = parse_arguments()
     #scenes = ["truck", "train", "raindeer"]
-    scenes = ["raindeer"]
+    scenes = ["truck","train"]
 
     if args.expe_config is None and args.grid_search_regularization is None:
         print("Running baseline experiment")

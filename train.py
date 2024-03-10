@@ -146,7 +146,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         # allows to add multiple regularizations at different times
         if(opt.maxvariance_regularization != 0 and iteration > 15_000 and iteration < 30_000):
             max_scaling = torch.max(gaussians.get_scaling, dim=1).values
-            loss += opt.maxvariance_regularization * torch.mean(max_scaling)
+            mean = torch.mean(max_scaling[~torch.isnan(max_scaling)])
+            loss += opt.maxvariance_regularization * mean
 
         if(opt.opacity_regularization != 0 and iteration > 15_000 and iteration < 30_000):
             opacities = gaussians.get_opacity
