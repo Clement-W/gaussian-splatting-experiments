@@ -96,7 +96,7 @@ def custom_experiments(scenes, args):
 
     for i in range(3):
         # repete experience a few times
-        #reg_args = f"--maxvariance_regularization 0.0001 --edge_regularization 0.005 --smoothness_regularization 0.0001"  # for all
+        #reg_args = f"--maxvariance_regularization 0.00001 --edge_regularization 0.005 --smoothness_regularization 0.0001"  # for all
         reg_args = f"--maxvariance_regularization 0.000001 --edge_regularization 0.0005 --smoothness_regularization 0.000001" #  for raindeer
         flag = f"maxvariance_edge_smoothness_{i}"
         run_experiment(reg_args, flag, scenes, args)
