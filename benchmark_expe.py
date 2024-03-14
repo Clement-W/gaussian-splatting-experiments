@@ -50,7 +50,7 @@ def run_experiments_from_config(config_path, scenes, args):
 
 def run_custom_gridsearch(scenes, args):
 
-    methods = { # tout, juste le début pour contraindre, toute la partie densification, milieu/fin densification, postdensification
+    methods = { 
         "maxvariance_regularization": [[500, 30000], [500, 7000], [500, 15000], [7000, 15000], [15000, 28000]],
         "opacity_regularization": [[7000, 15000], [15000, 28000], [2500, 30000]],
         "edge_regularization": [[500, 30000], [500, 7000], [500, 15000], [7000, 15000], [15000, 28000]],
@@ -74,8 +74,8 @@ def run_custom_gridsearch2(scenes, args):
 
     methods = ["maxvariance_regularization", "opacity_regularization", "edge_regularization", "smoothness_regularization"]
     #combinations = [[0,1], [0,2], [0,3], [1,2], [1,3], [2,3], [0,1,2,3], [0,1,2], [0,1,3], [0,2,3], [1,2,3]] # indices of methods to combine
-    #combinations = [[1,3], [1,2], [0,1,2], [0,2,3], [2], [0], [3]] 
-    combinations = [[0,2,3]] 
+    combinations = [[1,3], [1,2], [0,1,2], [0,2,3], [2], [0], [3]] 
+    #combinations = [[0,2,3]] 
     lambdas = {
         "maxvariance_regularization":0.001,
         "opacity_regularization":0.0000001,
@@ -96,20 +96,18 @@ def custom_experiments(scenes, args):
 
     for i in range(3):
         # repete experience a few times
-        #reg_args = f"--maxvariance_regularization 0.0001 --edge_regularization 0.005 --smoothness_regularization 0.0001"  # for all
-        reg_args = f"--maxvariance_regularization 0.000001 --edge_regularization 0.0005 --smoothness_regularization 0.000001" #  for raindeer
+        reg_args = f"--maxvariance_regularization 0.0001 --edge_regularization 0.005 --smoothness_regularization 0.0001"  # for all
         flag = f"maxvariance_edge_smoothness_{i}"
         run_experiment(reg_args, flag, scenes, args)
 
-    # for j in range(3):
-    #     # run baseline a few times too
-    #     flag = f"baseline_{j}"
-    #     run_experiment("", flag, scenes, args)
+    for j in range(3):
+        # run baseline a few times too
+        flag = f"baseline_{j}"
+        run_experiment("", flag, scenes, args)
     
 def main():
     args = parse_arguments()
-    #scenes = ["truck", "train", "raindeer"]
-    scenes = ["raindeer"]
+    scenes = ["truck", "train", "raindeer"]
 
     if args.expe_config is None and args.grid_search_regularization is None:
         print("Running baseline experiment")
