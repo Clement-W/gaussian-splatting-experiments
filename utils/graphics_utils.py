@@ -19,6 +19,7 @@ class BasicPointCloud(NamedTuple):
     colors : np.array
     normals : np.array
 
+# Applies a geometric transformation to a set of points using a transformation matrix.
 def geom_transform_points(points, transf_matrix):
     P, _ = points.shape
     ones = torch.ones(P, 1, dtype=points.dtype, device=points.device)
@@ -28,6 +29,7 @@ def geom_transform_points(points, transf_matrix):
     denom = points_out[..., 3:] + 0.0000001
     return (points_out[..., :3] / denom).squeeze(dim=0)
 
+# Computes the world-to-view transformation matrix.
 def getWorld2View(R, t):
     Rt = np.zeros((4, 4))
     Rt[:3, :3] = R.transpose()
@@ -48,6 +50,7 @@ def getWorld2View2(R, t, translate=np.array([.0, .0, .0]), scale=1.0):
     Rt = np.linalg.inv(C2W)
     return np.float32(Rt)
 
+# Computes the projection matrix.
 def getProjectionMatrix(znear, zfar, fovX, fovY):
     tanHalfFovY = math.tan((fovY / 2))
     tanHalfFovX = math.tan((fovX / 2))

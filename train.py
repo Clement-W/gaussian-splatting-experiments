@@ -119,9 +119,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         else:
             raise ValueError(f"Unknown loss type {opt.loss_type}")
         
-
-        # if(opt.regularization_type != "" and iteration > opt.regularize_from_iter and iteration < opt.regularize_until_iter):
-                        
+        # PREVIOUSLY USED FOR FIRST EXPERIMENTS ON REGULARIZATION:
+        # if(opt.regularization_type != "" and iteration > opt.regularize_from_iter and iteration < opt.regularize_until_iter):              
         #     # if(opt.regularization_type == "variance_regularization"):
         #     #     norm_scaling = torch.norm(gaussians.get_scaling, dim=1) #essayer gaussians.get_scaling[visibility_filter]
         #     #     loss += opt.lambda_regularization * torch.mean(norm_scaling)
@@ -140,8 +139,6 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         #         loss += opt.lambda_regularization * smoothness
         #     else:
         #         raise ValueError(f"Unknown regularization type {opt.regularization_type}")
-
-
  
         # allows to add multiple regularizations at different times
         if(opt.maxvariance_regularization != 0 and iteration > 15_000 and iteration < 30_000):
@@ -187,8 +184,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             if iteration < opt.densify_until_iter:
                 # Keep track of max radii in image-space for pruning
                 gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
-                #gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
-
+                
                 if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
                     size_threshold = 20 if iteration > opt.opacity_reset_interval else None
                     gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold)
